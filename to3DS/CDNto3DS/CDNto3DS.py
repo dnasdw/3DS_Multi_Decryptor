@@ -174,7 +174,12 @@ for i in xrange(contentCount):
 	outfname = titleid + ('_v' + str(dlversion), '')[dlversion == -1] + '/' + cID
 	if os.path.exists(outfname) == 0 or forceDownload == 1 or os.path.getsize(outfname) != unpack('>Q', tmd[cOffs+8:cOffs+16])[0]:
 		if noDownload == 0:
-			response = urllib2.urlopen(baseurl + '/' + cID)
+			try:
+				response = urllib2.urlopen(baseurl + '/' + cID)
+			except urllib2.HTTPError, e:
+				if e.code == 404:
+					print 'HTTPError 404\n'
+					continue
 			chunk_read(response, outfname, report_hook=chunk_report)
 			
 			#If we redownloaded the content, then decrypting it is implied.

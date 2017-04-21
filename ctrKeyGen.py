@@ -42,6 +42,7 @@ import sys
 import glob
 import struct
 import fnmatch
+import re
 from hashlib import sha256
 from ctypes import *
 from binascii import hexlify,unhexlify
@@ -216,10 +217,12 @@ def parseNCSD(fh):
 			data = data + result[1]
 	return [entries, data]
 
-def parseNCCH(fh, offs=0, idx=0, titleId='', standAlone=1):
+def parseNCCH(fh, offs=0, idx=0, titleId='', standAlone=1, partitionName=''):
 	tab = '    ' if not standAlone else '  '
+	if partitionName == '':
+		partitionName = ncsdPartitions[idx]
 	if not standAlone:
-		print '  Parsing %s NCCH' % ncsdPartitions[idx]
+		print '  Parsing %s NCCH' % partitionName
 	else:
 		print 'Parsing NCCH in file "%s":' % os.path.basename(fh.name)
 	entries = 0
@@ -257,21 +260,21 @@ def parseNCCH(fh, offs=0, idx=0, titleId='', standAlone=1):
 	
 	if header.exhdrSize:
 		data = data + parseNCCHSection(header, ncchSection.exheader, 0, 0, 1, tab)
-		data = data + genOutName(titleId, ncsdPartitions[idx], b'exheader')
+		data = data + genOutName(titleId, partitionName, b'exheader')
 		entries += 1
 		print ''
 	if header.exefsSize: #We need generate two xorpads for exefs if it uses 7.x crypto, since only a part of it uses the new crypto.
 		data = data + parseNCCHSection(header, ncchSection.exefs, 0, 0, 1, tab)
-		data = data + genOutName(titleId, ncsdPartitions[idx], b'exefs_norm')
+		data = data + genOutName(titleId, partitionName, b'exefs_norm')
 		entries += 1
 		if useSeedCrypto and not uses7xCrypto:
 			data = data + parseNCCHSection(header, ncchSection.exefs, uses7xCrypto, useSeedCrypto, 0, tab)
-			data = data + genOutName(titleId, ncsdPartitions[idx], b'exefs_7x')
+			data = data + genOutName(titleId, partitionName, b'exefs_7x')
 			entries += 1
 		print ''
 	if header.romfsSize and not uses7xCrypto:
 		data = data + parseNCCHSection(header, ncchSection.romfs, uses7xCrypto, useSeedCrypto, 1, tab)
-		data = data + genOutName(titleId, ncsdPartitions[idx], b'romfs')
+		data = data + genOutName(titleId, partitionName, b'romfs')
 		entries += 1
 		print ''
 	
@@ -362,7 +365,11 @@ if __name__ == "__main__":
 				result = parseNCSD(fh)
 				print ''
 			elif magic == b'NCCH':
-				result = parseNCCH(fh)
+				match = re.match(r'^.*0000([0-9A-Fa-f]{4})\.app$', file)
+				if match:
+					result = parseNCCH(fh, partitionName=match.group(1))
+				else:
+					result = parseNCCH(fh)
 				print ''
 		
 		if result:

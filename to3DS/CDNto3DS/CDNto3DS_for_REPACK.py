@@ -174,19 +174,24 @@ for i in xrange(contentCount):
 	outfname = titleid + ('_v' + str(dlversion), '')[dlversion == -1] + '/' + cID
 	if os.path.exists(outfname) == 0 or forceDownload == 1 or os.path.getsize(outfname) != unpack('>Q', tmd[cOffs+8:cOffs+16])[0]:
 		if noDownload == 0:
-			response = urllib2.urlopen(baseurl + '/' + cID)
+			try:
+				response = urllib2.urlopen(baseurl + '/' + cID)
+			except urllib2.HTTPError, e:
+				if e.code == 404:
+					print 'HTTPError 404\n'
+					continue
 			chunk_read(response, outfname, report_hook=chunk_report)
 			
 			#If we redownloaded the content, then decrypting it is implied.
-			call(["aescbc", outfname, outfname + '.dec', titlekey, cIDX + '0000000000000000000000000000'])
+			call(["aescbc", outfname, outfname + '.app', titlekey, cIDX + '0000000000000000000000000000'])
 		else :
 			print("Content Link:  %s\n Target File:  %s\n\n" % (baseurl + '/' + cID, outfname))
 			noDownloadFile.write("%s:%s\n"%(outfname,baseurl+'/'+cID))
 			continue
 
 	print '\n'
-	mCiaCmd = mCiaCmd + ' -i ' + outfname + '.dec' + ':0x' + cIDX + ':0x' + cID
-	mRomCmd = mRomCmd + ' -i ' + outfname + '.dec' + ':0x' + cIDX + ':0x' + cID
+	mCiaCmd = mCiaCmd + ' -i ' + outfname + '.app' + ':0x' + cIDX + ':0x' + cID
+	mRomCmd = mRomCmd + ' -i ' + outfname + '.app' + ':0x' + cIDX + ':0x' + cID
 
 if noDownload == 1 :
 	noDownloadFile.close()

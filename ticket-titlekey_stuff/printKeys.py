@@ -12,4 +12,4 @@ with open('decTitleKeys.bin', 'rb') as fh:
 		fh.seek(8, os.SEEK_CUR)
 		titleId = fh.read(8)
 		decryptedTitleKey = fh.read(16)
-		print '%s: %s' % (hexlify(titleId), hexlify(decryptedTitleKey))
+		print '%s %s' % (hexlify(titleId), hexlify(decryptedTitleKey))

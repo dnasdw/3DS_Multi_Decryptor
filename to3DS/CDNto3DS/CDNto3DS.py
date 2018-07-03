@@ -109,7 +109,7 @@ if tmd[:4] != '\x00\x01\x00\x04':
 	raise SystemExit(0)
 
 # If not normal application, don't make 3ds
-if titleid[:8] != '00040000':
+if titleid[:8] != '00040000' and titleid[:8] != '00040002':
 	make3ds = 0
 
 mCiaCmd = 'makerom -f cia -rsf rom.rsf -o ' + titleid + '.cia'
